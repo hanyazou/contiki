@@ -25,9 +25,15 @@ ifeq ($(HOST_OS),Windows)
   SDK_BASE_DIR ?= C:/NXP/bstudio_nxp/sdk/JN-SW-4163
   FLASH_PROGRAMMER ?= ${SDK_BASE_DIR}/Tools/flashprogrammer/FlashCLI.exe
 else
+ifeq ($(HOST_OS),Darwin)
+  SDK_BASE_DIR ?= $(HOME)/.wine/drive_c/NXP/bstudio_nxp/sdk/JN-SW-4163
+  WINE=wine 
+  FLASH_PROGRAMMER ?= $(CONTIKI)/tools/twe-lite/tweflash
+else
   # Assume Linux
   SDK_BASE_DIR ?= /usr/jn516x-sdk/JN-SW-4163
   FLASH_PROGRAMMER ?= $(CONTIKI)/tools/jn516x/JennicModuleProgrammer
+endif
 endif
 
 ###############################################################################
@@ -69,6 +75,17 @@ ifeq ($(DEBUG),SW)
 CFLAGS += -DDEBUG=1
 endif
 
+ifdef WINE
+CC:=$(WINE)$(TOOL_COMMON_BASE_DIR)/$(TOOLCHAIN_PATH)/bin/$(CROSS_COMPILE)-gcc
+AS:=$(WINE)$(TOOL_COMMON_BASE_DIR)/$(TOOLCHAIN_PATH)/bin/$(CROSS_COMPILE)-as
+LD:=$(WINE)$(TOOL_COMMON_BASE_DIR)/$(TOOLCHAIN_PATH)/bin/$(CROSS_COMPILE)-ld
+AR:=$(WINE)$(TOOL_COMMON_BASE_DIR)/$(TOOLCHAIN_PATH)/bin/$(CROSS_COMPILE)-ar
+NM:=$(WINE)$(TOOL_COMMON_BASE_DIR)/$(TOOLCHAIN_PATH)/bin/$(CROSS_COMPILE)-nm
+STRIP:=$(WINE)$(TOOL_COMMON_BASE_DIR)/$(TOOLCHAIN_PATH)/bin/$(CROSS_COMPILE)-strip
+SIZE:=$(WINE)$(TOOL_COMMON_BASE_DIR)/$(TOOLCHAIN_PATH)/bin/$(CROSS_COMPILE)-size
+OBJCOPY:=$(WINE)$(TOOL_COMMON_BASE_DIR)/$(TOOLCHAIN_PATH)/bin/$(CROSS_COMPILE)-objcopy
+OBJDUMP:=$(WINE)$(TOOL_COMMON_BASE_DIR)/$(TOOLCHAIN_PATH)/bin/$(CROSS_COMPILE)-objdump
+else
 # Path-independent cross-compiler
 CC:=$(CROSS_COMPILE)-gcc
 AS:=$(CROSS_COMPILE)-as
@@ -79,6 +96,7 @@ STRIP:=$(CROSS_COMPILE)-strip
 SIZE:=$(CROSS_COMPILE)-size
 OBJCOPY:=$(CROSS_COMPILE)-objcopy
 OBJDUMP:=$(CROSS_COMPILE)-objdump
+endif
 
 ARCH = jn516x-ccm-star.c exceptions.c rtimer-arch.c rtimer-arch-slow.c \
        slip_uart0.c clock.c micromac-radio.c \
@@ -189,6 +207,7 @@ else
 endif
 endif
 
+ifneq ($(HOST_OS),Darwin)
 # Note: this logic is different from Sky
 ifneq ("", "$(filter-out %all,$(filter %.upload serial% login, $(MAKECMDGOALS)))")
 ifndef MOTE
@@ -196,6 +215,7 @@ ifndef MOTE
 endif
 endif
 PORT = $(USBDEVBASENAME)$(MOTE)
+endif
 
 #### make targets
 
@@ -260,8 +280,13 @@ ifeq ($(HOST_OS),Windows)
 %.upload: %.$(TARGET).bin
 	${FLASH_PROGRAMMER} -a -c $(PORT) -B 1000000 -s -w -f $<
 else
+ifeq ($(HOST_OS),Darwin)
 %.upload: %.$(TARGET).bin
+	${FLASH_PROGRAMMER} -a -c $(PORT) -B 115200 -s -w -f $<
+else
+#%.upload: %.$(TARGET).bin
 	${FLASH_PROGRAMMER} -V 10 -v -s $(PORT) -I 38400 -P 1000000 -f $<
+endif
 endif
 
 ### Flash the given file
