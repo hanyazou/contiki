@@ -32,7 +32,18 @@ export -f load
 
 unload
 $tweusb -l
-tgt=`devices`
+tgts=(`devices`)
+if [ ${tgts[1]}x == x ]; then
+    tgt=${tgts[0]}
+else
+    echo
+    echo 'Multiple targets found.'
+    PS3='Please select: '
+    select tgt in "${tgts[@]}"; do
+       break
+    done
+fi
+
 echo target=$tgt
 export tgt
 load
