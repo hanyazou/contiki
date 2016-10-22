@@ -61,12 +61,22 @@ flash() {
     unload
     echo set $tgt into program mode...
     $tweusb -p $tgt
+    echo
     load
 
     ln -s /dev/tty.usbserial-$tgt ~/.wine/dosdevices/$com
     wine ~/.wine/drive_c/NXP/bstudio_nxp/sdk/JN-SW-4163/../../../ProductionFlashProgrammer/JN51xxProgrammer.exe -V 10 -v -s $com -I 38400 -P 115200 -Y -f *.jn516x.bin
 }
 export -f flash
+
+reset() {
+    unload
+    echo set $tgt into program mode...
+    $tweusb -r $tgt
+    echo
+    load
+}
+export -f reset
 
 connect()
 {
