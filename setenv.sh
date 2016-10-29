@@ -3,11 +3,15 @@
 export tweusb=/usr/local/TWESDK/Tools/jenprog/tweusb
 export com=COM99
 export make=/usr/bin/make
+export baudrate=115200
 
 MD="$MD TARGET=jn516x"
 MD="$MD RF_CHANNEL=25"
-MD="$MD BAUD_RATE=UART_RATE_230400"
+MD="$MD BAUD_RATE=UART_RATE_$baudrate"
 export MAKEDEFS="$MD"
+
+export CONTIKI=$(dirname "$0")
+echo CONTIKI=$CONTIKI
 
 devices()
 {
@@ -48,6 +52,18 @@ echo target=$tgt
 export tgt
 load
 
+sniffer()
+{
+    python $CONTIKI/../sensniff/sensniff.py -d /dev/tty.usbserial-$tgt -b $baudrate
+}
+export -f sniffer
+
+router()
+{
+    sudo $CONTIKI/tools/tunslip6 -v5 -B $baudrate -s /dev/cu.usbserial-$tgt -t /dev/tun0 -v 99 aaaa::1/64
+}
+export -f router
+
 make()
 {
     #echo $make TARGET=jn516x RF_CHANNEL=25 BAUD_RATE=UART_RATE_230400 $*
@@ -64,6 +80,7 @@ flash() {
     echo
     load
 
+    rm -f ~/.wine/dosdevices/$com
     ln -s /dev/tty.usbserial-$tgt ~/.wine/dosdevices/$com
     wine ~/.wine/drive_c/NXP/bstudio_nxp/sdk/JN-SW-4163/../../../ProductionFlashProgrammer/JN51xxProgrammer.exe -V 10 -v -s $com -I 38400 -P 115200 -Y -f *.jn516x.bin
 }
@@ -81,7 +98,7 @@ export -f reset
 connect()
 {
     echo "connect to /dev/tty.usbserial-$tgt. (type '~.' and return to disconnect.)"
-    sudo cu -s 230400 -l /dev/tty.usbserial-$tgt
+    sudo cu -s $baudrate -l /dev/tty.usbserial-$tgt
     rm -f ~/.wine/dosdevices/$com
 }
 export -f connect
