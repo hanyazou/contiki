@@ -9,6 +9,9 @@ if [ .$1 == .cc2650 ]; then
 elif [ .$1 == .jn516x ]; then
     tgt_type="JN516x"
     tgt_jn516x=true
+elif [ .$1 == .zoul ]; then
+    tgt_type="Zolertia RE-Mote"
+    tgt_zoul=true
 else
     tgt_type="JN516x"
     tgt_jn516x=true
@@ -28,6 +31,11 @@ fi
 if $tgt_cc2650; then
 MD="$MD TARGET=srf06-cc26xx"
 MD="$MD BOARD=launchpad/cc2650"
+fi
+if $tgt_zoul; then
+MD="$MD TARGET=zoul"
+MD="$MD BOARD=orion"
+MD="$MD RF_CHANNEL=25"
 fi
 
 export MAKEDEFS="$MD"
@@ -132,6 +140,15 @@ EOF
     echo loadfile *.hex >> $cmdfile
     echo exit >> $cmdfile
     JLinkExe -device CC2650F128 -if JTAG -jtagconf -1,-1 -CommanderScript $cmdfile
+}
+export -f flash
+fi
+if $tgt_zoul; then
+flash() {
+    cmdfile=/tmp/jlinkcmd.tmp
+    echo loadfile *.hex >> $cmdfile
+    echo exit >> $cmdfile
+    JLinkExe -device CC2538 -if JTAG -jtagconf -1,-1 -speed auto -autoconnect 1 -CommanderScript $cmdfile
 }
 export -f flash
 fi
