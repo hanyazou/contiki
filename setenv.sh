@@ -2,6 +2,7 @@
 
 tgt_cc2650=false
 tgt_jn516x=false
+tgt_zoul=false
 
 if [ .$1 == .cc2650 ]; then
     tgt_type="CC2650"
