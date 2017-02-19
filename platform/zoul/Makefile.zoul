@@ -58,6 +58,10 @@ ifeq ($(WITH_IP64),1)
   MODULES += core/net/ip64
 endif
 
+ifdef RF_CHANNEL
+  CFLAGS += -DRF_CHANNEL=$(RF_CHANNEL)
+endif
+
 BSL = $(CONTIKI)/tools/cc2538-bsl/cc2538-bsl.py
 
 ### Use the specific Zoul subplatform to query for connected devices
